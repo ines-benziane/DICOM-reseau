@@ -3,7 +3,6 @@ from pynetdicom import AE
 class TelemisConfig:
     HOST = "192.168.0.172"
     PORT = 7008
-
     CALLING_AET = "RMN-STATION"
     CALLED_AET = "TELEMISQR"
 
