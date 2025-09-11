@@ -3,6 +3,9 @@ Le but est de créer un CLI (interface ligne de commande) qui va :
     - se connecter à Télémis 
     - récupérer les images DICOM souhaitées 
 
+##### NOTES ####
+Ce projet est codé comme un SCU (il demande les images) et comme un SCP à la fois (il reçoit la demande de stockage pour les images demandées). On doit préciser son role de scp (role_a dans dicom). 
+
 ##### CONTRAINTES #####
 On ne doit pas récupérer le nom des patients
 
@@ -12,6 +15,9 @@ Le projet suit une architecture client/server
 Architecture modulaire
 Le server est le logicielle Telemis
 Respect de la séparation des responsabilités
+Responsabilité distinctes mais collaboration = favoriser composition sur héritage
+Respect des principes SOLID
+
 
 dicom_client/
 ├── config/
