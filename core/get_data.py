@@ -2,7 +2,6 @@ from pathlib import Path
 from pydicom import Dataset
 from pynetdicom import AE, evt, StoragePresentationContexts, AllStoragePresentationContexts, build_role
 from pynetdicom.sop_class import StudyRootQueryRetrieveInformationModelGet, MRImageStorage
-from config.server_config import TelemisConfig
 from pydicom.uid import ExplicitVRLittleEndian
 import logging
 
@@ -13,14 +12,20 @@ class GetData:
     SUCCESS_STATUS = 0x0000
     QUERY_LEVEL_SERIES = 'SERIES'
     
-    def __init__(self, output_dir="tmp"):
+    def __init__(self, output_dir, config, ae_factory=None):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
+        self.config = config
+        self.ae_factory = ae_factory if ae_factory is not None else self._default_ae_factory
         self._setup_ae()
+
+    def _default_ae_factory(self):
+        """Factory par défaut - crée un AE normal"""
+        return AE(ae_title=self.config.CALLING_AET)
 
     def _setup_ae(self):
         """Configure Application Entity"""
-        self.ae = AE(ae_title=TelemisConfig.CALLING_AET)
+        self.ae = self.ae_factory()
         self.ae.requested_contexts = StoragePresentationContexts[:self.MAX_CONTEXTS]
         self.ae.supported_contexts = AllStoragePresentationContexts
         self.ae.add_requested_context(StudyRootQueryRetrieveInformationModelGet)
@@ -42,8 +47,8 @@ class GetData:
         
         return self.SUCCESS_STATUS
 
-    def retrieve_series(self, series_instance_uid):
-        """Point d'entrée principal - délègue aux méthodes privées"""
+    def retrieve_data(self, series_instance_uid):
+        """Point d'entrée principal"""
         self.target_series_uid = series_instance_uid
         self.files_received = 0
         
@@ -61,9 +66,9 @@ class GetData:
         self.scp = self.ae.start_server(("", 0), block=False, evt_handlers=handlers)
         
         self.assoc = self.ae.associate(
-            TelemisConfig.HOST, 
-            TelemisConfig.PORT, 
-            ae_title=TelemisConfig.CALLED_AET, 
+            self.config.HOST, 
+            self.config.PORT, 
+            ae_title=self.config.CALLED_AET, 
             ext_neg=[self.role_a], 
             evt_handlers=handlers
         )
